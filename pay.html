@@ -4,33 +4,127 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Pay</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
   <style>
     :root{--bg:#000;--text:#fff;--text-dim:#999;--pill-start:#2b1035;--pill-end:#30163d}
     *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,sans-serif}
-    .phone{background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;padding:24px;max-width:430px;margin:0 auto}
-    @media(min-width:600px){.phone{border:1px solid #222;border-radius:16px}}
-    .hdr{display:flex;align-items:center;margin-top:30px;justify-content:space-between}
+
+    .phone{
+      background:var(--bg);color:var(--text);height:100vh;
+      display:flex;flex-direction:column;
+      padding:24px;max-width:430px;margin:0 auto;
+    }
+    @media(min-width:600px){
+      .phone{border:1px solid #222;border-radius:16px}
+    }
+
+    .hdr{
+      display:flex;align-items:center;
+      margin-top:30px;justify-content:space-between;
+    }
     .hdr-title{font-size:1.3rem;font-weight:600}
     .hdr i{font-size:1.2rem;cursor:pointer}
-    .pill{padding:8px 22px;border:none;border-radius:28px;background:linear-gradient(145deg,var(--pill-start),var(--pill-end));color:var(--text);font-weight:600;cursor:pointer;transition:opacity .15s}
+
+    .pill{
+      padding:8px 22px;border:none;border-radius:28px;
+      background:linear-gradient(145deg,var(--pill-start),var(--pill-end));
+      color:var(--text);font-weight:600;cursor:pointer;transition:opacity .15s;
+    }
     .pill:disabled{opacity:.35;cursor:default}
-    .row{margin-top:28px;display:flex;align-items:center;gap:12px}
+
+    .row{
+      margin-top:28px;display:flex;align-items:center;gap:12px;
+    }
     .row label{width:28px;font-size:.95rem;color:var(--text-dim)}
-    .row input{flex:1;background:none;border:none;border-bottom:1px solid #222;color:var(--text);font-size:1rem;padding:6px 0}
+    .row input{
+      flex:1;background:none;border:none;border-bottom:1px solid #222;
+      color:var(--text);font-size:1rem;padding:6px 0;
+    }
     .row input:focus{outline:none;border-bottom-color:#444}
-    #suggestions{margin-top:14px;max-height:160px;overflow-y:auto}
-    .sg{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;cursor:pointer;transition:background .15s}
+
+    #suggestions{
+      margin-top:14px;
+      max-height:260px;              /* taller so 10 rows fit before scroll */
+      overflow-y:auto;
+    }
+    .sg{
+      display:flex;align-items:center;gap:10px;
+      padding:10px;border-radius:12px;cursor:pointer;
+      transition:background .15s;
+    }
     .sg:hover{background:#111}
     .sg-typed{background:#0a0a0a}
-    .avatar{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff}
+
+    .avatar{
+      width:36px;height:36px;border-radius:50%;
+      flex-shrink:0;display:flex;align-items:center;justify-content:center;
+      font-weight:600;color:#fff;
+    }
     .nm{font-size:.95rem}
     .handle{font-size:.8rem;color:var(--text-dim)}
-    .balance{margin-top:22px;display:flex;align-items:center;gap:6px;font-size:.9rem}
+
+    .balance{
+      margin-top:22px;display:flex;align-items:center;gap:6px;font-size:.9rem;
+    }
     .balance i{font-size:1.1rem;color:#0f0}
-    #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;visibility:hidden}
-    .spinner{width:56px;height:56px;border:5px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .9s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* ---------- full-screen loading overlay ---------- */
+    #loading{
+      position:fixed;inset:0;display:flex;
+      align-items:center;justify-content:center;
+      background:#000;visibility:hidden;
+      z-index:999;
+    }
+
+    /* dot circle loader */
+    .dots-loader{
+      position:relative;
+      width:72px;
+      height:72px;
+      animation:dots-rotate 2.2s linear infinite;
+    }
+    .dots-loader span{
+      position:absolute;
+      top:50%;left:50%;
+      width:8px;height:8px;
+      margin:-4px;
+      background:#fff;
+      border-radius:50%;
+      opacity:.9;
+    }
+    /* place 12 dots around a circle */
+    .dots-loader span:nth-child(1)  {transform:rotate(  0deg) translate(28px);}
+    .dots-loader span:nth-child(2)  {transform:rotate( 30deg) translate(28px);}
+    .dots-loader span:nth-child(3)  {transform:rotate( 60deg) translate(28px);}
+    .dots-loader span:nth-child(4)  {transform:rotate( 90deg) translate(28px);}
+    .dots-loader span:nth-child(5)  {transform:rotate(120deg) translate(28px);}
+    .dots-loader span:nth-child(6)  {transform:rotate(150deg) translate(28px);}
+    .dots-loader span:nth-child(7)  {transform:rotate(180deg) translate(28px);}
+    .dots-loader span:nth-child(8)  {transform:rotate(210deg) translate(28px);}
+    .dots-loader span:nth-child(9)  {transform:rotate(240deg) translate(28px);}
+    .dots-loader span:nth-child(10) {transform:rotate(270deg) translate(28px);}
+    .dots-loader span:nth-child(11) {transform:rotate(300deg) translate(28px);}
+    .dots-loader span:nth-child(12) {transform:rotate(330deg) translate(28px);}
+
+    @keyframes dots-rotate{
+      to{transform:rotate(360deg)}
+    }
+
+    /* reduced motion: fade-pulse instead of spin */
+    @media (prefers-reduced-motion:reduce){
+      .dots-loader{animation:none}
+      .dots-loader span{
+        animation:dots-pulse 1s ease-in-out infinite alternate;
+      }
+      @keyframes dots-pulse{
+        from{opacity:.3;transform:scale(.8)}
+        to{opacity:1;transform:scale(1)}
+      }
+    }
   </style>
 </head>
 <body>
@@ -40,23 +134,34 @@
       <div class="hdr-title" id="amountHdr">$0</div>
       <button class="pill" id="payBtn" disabled>Pay</button>
     </div>
+
     <div class="row" style="margin-top:40px">
       <label>To</label>
       <input id="toInput" type="text" placeholder="Name or $cashtag" autocomplete="off"/>
       <img src="https://dummyimage.com/48x48/0d0d0d/ffffff&text=%F0%9F%92%8E" alt="gem" style="width:32px;border-radius:8px">
     </div>
+
     <div class="row">
       <label>For</label>
       <input id="noteInput" type="text" placeholder="What's it for? (optional)"/>
     </div>
+
     <div class="balance">
       <i class="fab fa-dollar-sign"></i>
       <span id="balanceText"></span>
       <i class="fas fa-chevron-down" style="margin-left:auto"></i>
     </div>
+
     <div id="suggestions"></div>
   </div>
-  <div id="loading"><div class="spinner"></div></div>
+
+  <div id="loading" role="status" aria-live="polite" aria-busy="true">
+    <div class="dots-loader" aria-label="Processing payment">
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+      <span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+  </div>
+
   <script>
     /* ---------- helpers ---------- */
     const $ = id => document.getElementById(id);
@@ -68,7 +173,8 @@
     const BALANCE_KEY = 'cashBalance';
     const DEFAULT_BAL = 64278686.00;
     let balance = parseFloat(localStorage.getItem(BALANCE_KEY) || DEFAULT_BAL);
-    const showBalance = () => $('balanceText').textContent = `Cash balance: $${balance.toLocaleString(undefined,{minimumFractionDigits:2})}`;
+    const showBalance = () => $('balanceText').textContent =
+      `Cash balance: $${balance.toLocaleString(undefined,{minimumFractionDigits:2})}`;
     showBalance();
 
     /* contacts for suggestions */
@@ -136,41 +242,78 @@
     const escMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
     function esc(str){return str.replace(/[&<>"']/g, ch => escMap[ch]);}
 
+    const MIN_SUGGESTIONS = 10;   // total rows to show (typed counts as 1)
+
     /* ---------- live suggestions ---------- */
     function renderSuggestions(){
       const raw = toInput.value.trim();
-      const q = raw.toLowerCase();
+      const q   = raw.toLowerCase();
       suggestionsEl.innerHTML = '';
-      if(!raw) return; // nothing typed
 
-      // always show a typed suggestion first
+      // helper to build a suggestion node
+      function addContactRow(c, extraClass=''){
+        const div = document.createElement('div');
+        div.className = 'sg' + (extraClass ? ' ' + extraClass : '');
+        div.innerHTML = `
+          <div class="avatar" style="background:${c.color}">${c.name[0]}</div>
+          <div><div class="nm">${esc(c.name)}</div><div class="handle">${esc(c.tag)}</div></div>`;
+        div.onclick = () => {
+          toInput.value = c.tag;
+          suggestionsEl.innerHTML = '';
+          payBtn.disabled = false;
+        };
+        suggestionsEl.appendChild(div);
+      }
+
+      // NOTHING TYPED → show top N contacts
+      if(!raw){
+        contacts.slice(0, MIN_SUGGESTIONS).forEach(c => addContactRow(c));
+        return;
+      }
+
+      // ALWAYS show a "typed" suggestion first
       const typedDiv = document.createElement('div');
       typedDiv.className='sg sg-typed';
       const firstChar = esc(raw[0] || '?').toUpperCase();
-      const displayHandle = raw.startsWith('$') ? raw : '$' + raw; // <-- keep $ in the lower (handle) name
-      typedDiv.innerHTML=`
-        <div class=\"avatar\" style=\"background:#333\">${firstChar}</div>
-        <div><div class=\"nm\">${esc(raw)}</div><div class=\"handle\">${esc(displayHandle)}</div></div>`;
-      typedDiv.onclick = () => { toInput.value = raw; suggestionsEl.innerHTML=''; payBtn.disabled = false; };
+      const displayHandle = raw.startsWith('$') ? raw : '$' + raw; // keep $ in lower/handle
+      typedDiv.innerHTML = `
+        <div class="avatar" style="background:#333">${firstChar}</div>
+        <div><div class="nm">${esc(raw)}</div><div class="handle">${esc(displayHandle)}</div></div>`;
+      typedDiv.onclick = () => {
+        toInput.value = raw;
+        suggestionsEl.innerHTML='';
+        payBtn.disabled = false;
+      };
       suggestionsEl.appendChild(typedDiv);
 
-      // matched contacts
-      contacts.filter(c => c.name.toLowerCase().includes(q) || c.tag.toLowerCase().includes(q))
-        .forEach(c=>{
-          const div = document.createElement('div');
-          div.className='sg';
-          div.innerHTML=`
-            <div class=\"avatar\" style=\"background:${c.color}\">${c.name[0]}</div>
-            <div><div class=\"nm\">${esc(c.name)}</div><div class=\"handle\">${esc(c.tag)}</div></div>`;
-          div.onclick = () => { toInput.value = c.tag; suggestionsEl.innerHTML=''; payBtn.disabled = false; };
-          suggestionsEl.appendChild(div);
-        });
+      // MATCHED contacts
+      const matches = contacts.filter(
+        c => c.name.toLowerCase().includes(q) || c.tag.toLowerCase().includes(q)
+      );
+
+      // If we don't reach MIN_SUGGESTIONS total, pad with additional contacts
+      if(matches.length + 1 < MIN_SUGGESTIONS){ // +1 for typed row
+        const need = MIN_SUGGESTIONS - 1 - matches.length;
+        const seen = new Set(matches.map(c=>c.tag.toLowerCase()));
+        for(const c of contacts){
+          if(seen.has(c.tag.toLowerCase())) continue;
+          matches.push(c);
+          seen.add(c.tag.toLowerCase());
+          if(matches.length >= MIN_SUGGESTIONS - 1) break;
+        }
+      }
+
+      // render matches
+      matches.forEach(c => addContactRow(c));
     }
 
     toInput.addEventListener('input', () => {
       renderSuggestions();
       payBtn.disabled = !toInput.value.trim();
     });
+
+    /* initial render so user sees 10 suggestions immediately */
+    renderSuggestions();
 
     /* ---------- pay action ---------- */
     payBtn.onclick = () => {

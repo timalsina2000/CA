@@ -1,94 +1,188 @@
+<!-- statement.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Payment Sent</title>
+<meta charset="UTF-8" />
+<meta name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Payment Sent</title>
 
-  <!-- Font Awesome for the check-circle icon -->
-  <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-        crossorigin="anonymous" referrerpolicy="no-referrer" />
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+      crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-  <style>
-    :root{
-      --bg:#000;--text:#fff;--text-dim:#aaa;
-      --pill-start:#2b1035;--pill-end:#30163d;
-      --success:#00c950;
-    }
-    *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,sans-serif}
+<style>
+:root{
+  --bg:#000;
+  --text:#fff;
+  --text-dim:#aaa;
+  --success:#00c950;
+  --done-text:#000;
+  --sheet-enter:0.38s; /* slide-up duration */
+  --sheet-ease:cubic-bezier(.16,1,.3,1);
+}
 
-    /* phone “frame” */
-    .phone{background:var(--bg);color:var(--text);height:100vh;
-           display:flex;flex-direction:column;padding:28px;max-width:430px;margin:0 auto;
-          
-          }
-    @media(min-width:600px){.phone{border:1px solid #222;border-radius:16px}}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,sans-serif}
 
-    /* top bar */
-    .top{display:flex;justify-content:space-between;
-      margin-top: 30px;
-      align-items:flex-start
-       
-    }
-    .check{
-      width:44px;height:44px;border-radius:50%;background:var(--success);
-      display:flex;align-items:center;justify-content:center;font-size:1.5rem;
-      color:var(--bg);
-    }
-    .top-right{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
-    .gem{width:48px;height:48px;border-radius:12px;object-fit:cover}
-    .gem-label{font-size:.75rem;color:var(--text-dim);white-space:nowrap}
+/* full-viewport black background */
+body{
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
 
-    /* main message */
-    .msg{
-      margin-top:60px;font-size:1.8rem;font-weight:600;line-height:1.3;
-      max-width:90%; /* wrap nicely on small phones */
-    }
+/* phone frame */
+.phone{
+  position:fixed; /* so we can slide it up */
+  inset:0;
+  max-width:430px;
+  margin:0 auto;
+  background:var(--bg);
+  padding:calc(28px + env(safe-area-inset-top,0px)) 28px calc(28px + env(safe-area-inset-bottom,0px));
+  display:flex;
+  flex-direction:column;
+  /* start off-screen bottom then animate in */
+  transform:translateY(100%);
+  animation:sheet-in var(--sheet-enter) var(--sheet-ease) forwards;
+  will-change:transform;
+}
+@media(min-width:600px){
+  .phone{border:1px solid #222;border-radius:16px}
+}
 
-    /* Done pill */
-    .done{
-      margin-top:auto;align-self:center; /* pushes it to the bottom */
-      padding:14px 36px;border:none;border-radius:36px;
-      background:linear-gradient(145deg,var(--pill-start),var(--pill-end));
-      color:var(--text);font-size:1.05rem;font-weight:600;
-      cursor:pointer;transition:opacity .15s;
-    }
-    .done:active{opacity:.75}
-  </style>
+@keyframes sheet-in{
+  to{transform:translateY(0)}
+}
+
+/* header row: X left, gem right */
+.hdr{
+  width:100%;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+}
+.hdr-btn{
+  background:none;
+  border:none;
+  color:var(--text);
+  font-size:1.4rem;
+  line-height:1;
+  cursor:pointer;
+  padding:4px;
+}
+.gem-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  text-align:center;
+  font-size:.75rem;
+  color:var(--text-dim);
+}
+.gem{
+  width:48px;
+  height:48px;
+  border-radius:12px;
+  object-fit:cover;
+}
+
+/* confirmation block */
+.conf{
+  display:flex;
+  align-items:flex-start;
+  gap:16px;
+  margin-top:64px;
+  max-width:90%;
+}
+.check{
+  width:48px;
+  height:48px;
+  border-radius:50%;
+  background:var(--success);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:1.5rem;
+  color:var(--bg);
+  flex-shrink:0;
+}
+.msg{
+  font-size:1.8rem;
+  font-weight:600;
+  line-height:1.25;
+  word-break:break-word;
+}
+
+/* Done pill bottom */
+.done{
+  margin-top:auto;
+  align-self:center;
+  width:100%;
+  max-width:320px;
+  padding:16px 0;
+  border:none;
+  border-radius:40px;
+  background:#fff;
+  color:var(--done-text);
+  font-size:1.1rem;
+  font-weight:600;
+  cursor:pointer;
+  transition:opacity .50s;
+}
+.done:active{opacity:.75}
+</style>
 </head>
 <body>
-  <div class="phone">
-    <!-- TOP BAR -->
-    <div class="top">
-      <div class="check"><i class="fas fa-check"></i></div>
 
-      <div class="top-right">
-        <img class="gem"
-             src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRw7M4zb_yzq9K2wLcnzew_JYRTOHGEdXqI-A&s"
-             alt="gem" />
-        
-      </div>
-    </div>
-
-    <!-- MAIN MESSAGE -->
-    <div id="msg" class="msg">You sent $0 to ...</div>
-
-    <!-- DONE BUTTON -->
-    <button id="doneBtn" class="done">Done</button>
+<div class="phone">
+  <!-- HEADER -->
+  <div class="hdr">
+    <button id="closeBtn" class="hdr-btn" aria-label="Close">
+      <i class="fas fa-times"></i>
+    </button>
+    
   </div>
 
-  <script>
-    /* populate amount + name from query string */
-    const p   = new URLSearchParams(location.search);
-    const amt = p.get('amount') || '0';
-    const to  = decodeURIComponent(p.get('to') || '').replace(/\+/g,' ') || 'Recipient';
+  <!-- CONFIRMATION -->
+  <div class="conf">
+    <div class="check"><i class="fas fa-check"></i></div>
+    <div id="msg" class="msg">You sent $0 to ...</div>
+  </div>
 
-    document.getElementById('msg').textContent = `You sent $${amt} to ${to}`;
+  <!-- DONE BUTTON -->
+  <button id="doneBtn" class="done">Done</button>
+</div>
 
-    /* Done → back to keypad */
-    document.getElementById('doneBtn').onclick = () => location.href = 'index.html';
-  </script>
+<script>
+/* read query params */
+const p   = new URLSearchParams(location.search);
+const amtRaw = p.get('amount') || '0';
+const toRaw  = decodeURIComponent(p.get('to') || '').replace(/\+/g,' ').trim();
+
+/* Format amount (keep cents if >0 / if decimal present) */
+let amtNum = parseFloat(amtRaw);
+let amtTxt;
+if(!isNaN(amtNum)){
+  // if user passed "500" show $500; if "500.25" show $500.25
+  const hasDecimal = /\.\d/.test(amtRaw);
+  amtTxt = hasDecimal
+    ? amtNum.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})
+    : amtNum.toLocaleString();
+}else{
+  // fallback just echo raw
+  amtTxt = amtRaw;
+}
+
+/* Clean display name.
+   If query is a $handle, you can display the handle OR strip the $ and Title Case it.
+   For now: show raw exactly (user asked to keep $ lower/handle names in other screens). */
+const toName = toRaw || 'Recipient';
+
+document.getElementById('msg').textContent = `You sent $${amtTxt} to ${toName}`;
+
+/* Buttons */
+document.getElementById('doneBtn').onclick  = () => location.href = 'index.html';
+document.getElementById('closeBtn').onclick = () => location.href = 'index.html';
+</script>
 </body>
 </html>
