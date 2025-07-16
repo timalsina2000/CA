@@ -110,7 +110,7 @@
 
     /* initialise / fetch balance */
     const BALANCE_KEY = 'cashBalance';
-    const DEFAULT_BAL = 642786868672.00;
+    const DEFAULT_BAL = 64278686.00;
     let balance = parseFloat(localStorage.getItem(BALANCE_KEY) || DEFAULT_BAL);
     const showBalance = () => $('balanceText').textContent =
       `Cash balance: $${balance.toLocaleString(undefined,{minimumFractionDigits:2})}`;
