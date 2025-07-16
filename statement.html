@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Payment Sent</title>
+
+  <!-- Font Awesome for the check-circle icon -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    :root{
+      --bg:#000;--text:#fff;--text-dim:#aaa;
+      --pill-start:#2b1035;--pill-end:#30163d;
+      --success:#00c950;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,sans-serif}
+
+    /* phone “frame” */
+    .phone{background:var(--bg);color:var(--text);height:100vh;
+           display:flex;flex-direction:column;padding:28px;max-width:430px;margin:0 auto;}
+    @media(min-width:600px){.phone{border:1px solid #222;border-radius:16px}}
+
+    /* top bar */
+    .top{display:flex;justify-content:space-between;align-items:flex-start}
+    .check{
+      width:44px;height:44px;border-radius:50%;background:var(--success);
+      display:flex;align-items:center;justify-content:center;font-size:1.5rem;
+      color:var(--bg);
+    }
+    .top-right{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+    .gem{width:48px;height:48px;border-radius:12px;object-fit:cover}
+    .gem-label{font-size:.75rem;color:var(--text-dim);white-space:nowrap}
+
+    /* main message */
+    .msg{
+      margin-top:60px;font-size:1.8rem;font-weight:600;line-height:1.3;
+      max-width:90%; /* wrap nicely on small phones */
+    }
+
+    /* Done pill */
+    .done{
+      margin-top:auto;align-self:center; /* pushes it to the bottom */
+      padding:14px 36px;border:none;border-radius:36px;
+      background:linear-gradient(145deg,var(--pill-start),var(--pill-end));
+      color:var(--text);font-size:1.05rem;font-weight:600;
+      cursor:pointer;transition:opacity .15s;
+    }
+    .done:active{opacity:.75}
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <!-- TOP BAR -->
+    <div class="top">
+      <div class="check"><i class="fas fa-check"></i></div>
+
+      <div class="top-right">
+        <img class="gem"
+             src="https://dummyimage.com/200x200/0d0d0d/ffffff&text=%F0%9F%92%8E"
+             alt="gem" />
+        <span class="gem-label">Auto blessed</span>
+      </div>
+    </div>
+
+    <!-- MAIN MESSAGE -->
+    <div id="msg" class="msg">You sent $0 to ...</div>
+
+    <!-- DONE BUTTON -->
+    <button id="doneBtn" class="done">Done</button>
+  </div>
+
+  <script>
+    /* populate amount + name from query string */
+    const p   = new URLSearchParams(location.search);
+    const amt = p.get('amount') || '0';
+    const to  = decodeURIComponent(p.get('to') || '').replace(/\+/g,' ') || 'Recipient';
+
+    document.getElementById('msg').textContent = `You sent $${amt} to ${to}`;
+
+    /* Done → back to keypad */
+    document.getElementById('doneBtn').onclick = () => location.href = 'index.html';
+  </script>
+</body>
+</html>

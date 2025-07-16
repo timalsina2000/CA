@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Pay</title>
+
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+  <style>
+    :root{
+      --bg:#000;--text:#fff;--text-dim:#999;
+      --pill-start:#2b1035;--pill-end:#30163d;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,sans-serif}
+
+    .phone{background:var(--bg);color:var(--text);height:100vh;
+      display:flex;flex-direction:column;padding:24px;max-width:430px;margin:0 auto;}
+    @media(min-width:600px){.phone{border:1px solid #222;border-radius:16px}}
+
+    /* header */
+    .hdr{display:flex;align-items:center;justify-content:space-between}
+    .hdr-title{font-size:1.3rem;font-weight:600}
+    .hdr i{font-size:1.2rem;cursor:pointer}
+    .pill{padding:8px 22px;border:none;border-radius:28px;
+          background:linear-gradient(145deg,var(--pill-start),var(--pill-end));
+          color:var(--text);font-weight:600;cursor:pointer;transition:opacity .15s}
+    .pill:disabled{opacity:.35;cursor:default}
+
+    /* form rows */
+    .row{margin-top:28px;display:flex;align-items:center;gap:12px}
+    .row label{width:28px;font-size:.95rem;color:var(--text-dim)}
+    .row input{flex:1;background:none;border:none;border-bottom:1px solid #222;
+               color:var(--text);font-size:1rem;padding:6px 0}
+    .row input:focus{outline:none;border-bottom-color:#444}
+
+    /* suggestions list */
+    #suggestions{margin-top:14px;max-height:160px;overflow-y:auto}
+    .sg{display:flex;align-items:center;gap:10px;padding:10px;border-radius:12px;
+        cursor:pointer;transition:background .15s}
+    .sg:hover{background:#111}
+    .avatar{width:36px;height:36px;border-radius:50%;flex-shrink:0;
+            display:flex;align-items:center;justify-content:center;font-weight:600;color:#fff}
+    .nm{font-size:.95rem}
+    .handle{font-size:.8rem;color:var(--text-dim)}
+
+    /* balance line */
+    .balance{margin-top:22px;display:flex;align-items:center;gap:6px;font-size:.9rem}
+    .balance i{font-size:1.1rem;color:#0f0}
+
+     /* ───── NEW spinner overlay ───── */
+    #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+              background:#000; visibility:hidden}
+    .spinner{
+      width:56px;height:56px;border:5px solid rgba(255,255,255,.2);
+      border-top-color:#fff;border-radius:50%;animation:spin 0.9s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div class="phone">
+    <!-- header -->
+    <div class="hdr">
+      <i class="fas fa-times" id="closeBtn"></i>
+      <div class="hdr-title" id="amountHdr">$0</div>
+      <button class="pill" id="payBtn" disabled>Pay</button>
+    </div>
+
+    <!-- form -->
+    <div class="row" style="margin-top:40px">
+      <label>To</label>
+      <input id="toInput" type="text" placeholder="Name or $cashtag" autocomplete="off"/>
+      <img src="https://dummyimage.com/48x48/0d0d0d/ffffff&text=%F0%9F%92%8E"
+           alt="gem" style="width:32px;border-radius:8px">
+    </div>
+    <div id="suggestions"></div>
+
+    <div class="row">
+      <label>For</label>
+      <input id="noteInput" type="text" placeholder="What's it for? (optional)"/>
+    </div>
+
+    <div class="balance">
+      <i class="fab fa-dollar-sign"></i>
+      <span id="balanceText"></span>
+      <i class="fas fa-chevron-down" style="margin-left:auto"></i>
+    </div>
+  </div>
+
+  <!-- processing overlay -->
+  <div id="loading"><div class="spinner"></div></div>
+
+  <script>
+    /* ---------- helpers ---------- */
+    const $ = id => document.getElementById(id);
+    const params = new URLSearchParams(location.search);
+    const payAmount = parseFloat(params.get('amount') || '0');   // number
+    $('amountHdr').textContent = '$' + payAmount;
+
+    /* initialise / fetch balance */
+    const BALANCE_KEY = 'cashBalance';
+    const DEFAULT_BAL = 642786868672.00;
+    let balance = parseFloat(localStorage.getItem(BALANCE_KEY) || DEFAULT_BAL);
+    const showBalance = () => $('balanceText').textContent =
+      `Cash balance: $${balance.toLocaleString(undefined,{minimumFractionDigits:2})}`;
+    showBalance();
+
+    /* contacts for suggestions */
+  const contacts = [
+  /* A-E */
+  { name: 'Aaliyah Bennett',     tag: '$aaliyah.b',        color: '#FF6B6B' },
+  { name: 'Benjamin Carter',     tag: '$bencarter',        color: '#557BFF' },
+  { name: 'Camila Diaz',         tag: '$cam.diaz',         color: '#00B894' },
+  { name: 'Derek Evans',         tag: '$devans',           color: '#FFA502' },
+  { name: 'Evelyn Foster',       tag: '$evefoster',        color: '#8E44AD' },
+
+  /* F-J */
+  { name: 'Felix Green',         tag: '$felixg',           color: '#16A085' },
+  { name: 'Grace Howard',        tag: '$graceh',           color: '#E84393' },
+  { name: 'Henry Ibarra',        tag: '$hibarra',          color: '#0984E3' },
+  { name: 'Isabella Johnson',    tag: '$isaj',             color: '#D63031' },
+  { name: 'Jacob King',          tag: '$jking',            color: '#6C5CE7' },
+
+  /* K-O */
+  { name: 'Katherine Esposito',  tag: '$kesp',             color: '#00C33F' },
+  { name: 'Liam Lewis',          tag: '$liam.lewis',       color: '#2ECC71' },
+  { name: 'Mia Martinez',        tag: '$miam',             color: '#FF9F1A' },
+  { name: 'Noah Nguyen',         tag: '$noah.n',           color: '#1ABC9C' },
+  { name: 'Olivia Ortiz',        tag: '$olivia.ortiz',     color: '#9B59B6' },
+
+  /* P-T */
+  { name: 'Paul Thomas',         tag: '$aaren',            color: '#5500FF' },
+  { name: 'Quinn Underwood',     tag: '$quinn.u',          color: '#E67E22' },
+  { name: 'Ruby Vega',           tag: '$rubyv',            color: '#E74C3C' },
+  { name: 'Samuel Wilson',       tag: '$sam.wilson',       color: '#3498DB' },
+  { name: 'Tony Biggest',        tag: '$tonya899gest',     color: '#FF4E00' },
+
+  /* U-Z */
+  { name: 'Uma Young',           tag: '$umay',             color: '#00CEC9' },
+  { name: 'Victor Zhang',        tag: '$vzhang',           color: '#6AB04C' },
+  { name: 'Wendy Zhao',          tag: '$wendyz',           color: '#EB4D4B' },
+  { name: 'Xavier Quinn',        tag: '$xquinn',           color: '#7D3C98' },
+  { name: 'Yara Patel',          tag: '$yara.p',           color: '#F8C471' },
+  { name: 'Zoe Rivera',          tag: '$zoer',             color: '#1F618D' },
+
+  /* Additional names to reach 40 */
+  { name: 'Alan Reyes',          tag: '$alanr',            color: '#B33771' },
+  { name: 'Bianca Lawson',       tag: '$biancl',           color: '#FFC312' },
+  { name: 'Carlos Mendes',       tag: '$c.mendes',         color: '#1289A7' },
+  { name: 'Diana Prince',        tag: '$dianap',           color: '#C0392B' },
+  { name: 'Ethan Brooks',        tag: '$ethanb',           color: '#27AE60' },
+  { name: 'Fiona Gallagher',     tag: '$fionag',           color: '#A569BD' },
+  { name: 'Gavin Hart',          tag: '$gavinh',           color: '#F1C40F' },
+  { name: 'Hannah Kim',          tag: '$hannahk',          color: '#0ABDE3' },
+  { name: 'Ivan Lopez',          tag: '$ivanl',            color: '#E17055' },
+  { name: 'Jasmine Moore',       tag: '$jmoore',           color: '#EE5253' },
+  { name: 'Kevin Ochoa',         tag: '$kev08',            color: '#10AC84' },
+  { name: 'Laura Perez',         tag: '$lperez',           color: '#6F1E51' },
+  { name: 'Miles Queen',         tag: '$milesq',           color: '#B71540' },
+  { name: 'Nina Rogers',         tag: '$ninar',            color: '#182C61' },
+  { name: 'Oscar Stone',         tag: '$oscarstone',       color: '#3867D6' },
+  { name: 'Piper Turner',        tag: '$pipert',           color: '#F8EFBA' },
+  { name: 'Quincy Valdez',       tag: '$qvaldez',          color: '#CAD3C8' },
+  { name: 'Riley West',          tag: '$rwest',            color: '#C4E538' },
+  { name: 'Sofia Xu',            tag: '$sofiax',           color: '#FF5E57' },
+  { name: 'Tristan Yates',       tag: '$tristany',         color: '#7158E2' },
+  { name: 'Ulysses Zane',        tag: '$ulyz',             color: '#0FBCF9' },
+  { name: 'Vera Allen',          tag: '$veraallen',        color: '#F19066' },
+  { name: 'Will Bosco',          tag: '$willb',            color: '#1E90FF' },
+  { name: 'Xena Calderon',       tag: '$xena.c',           color: '#B53471' },
+  { name: 'Yusuf Delgado',       tag: '$ydelgado',         color: '#3B3B98' },
+  { name: 'Zara Edwards',        tag: '$zarae',            color: '#24AE60' }
+];
+
+
+    const toInput = $('toInput');
+    const suggestionsEl = $('suggestions');
+    const payBtn = $('payBtn');
+    const loading = $('loading');
+
+    /* ---------- live suggestions ---------- */
+    function renderSuggestions(){
+      const q = toInput.value.trim().toLowerCase();
+      suggestionsEl.innerHTML = '';
+      if(!q) return;
+
+      contacts.filter(c =>
+        c.name.toLowerCase().includes(q) || c.tag.toLowerCase().includes(q)
+      ).forEach(c=>{
+        const div = document.createElement('div');
+        div.className='sg';
+        div.innerHTML=`
+          <div class="avatar" style="background:${c.color}">${c.name[0]}</div>
+          <div><div class="nm">${c.name}</div><div class="handle">${c.tag}</div></div>`;
+        div.onclick = () => {
+          toInput.value = c.tag;
+          suggestionsEl.innerHTML='';
+          payBtn.disabled = false;
+        };
+        suggestionsEl.appendChild(div);
+      });
+    }
+
+    toInput.oninput = () => {
+      renderSuggestions();
+      payBtn.disabled = !toInput.value.trim();
+    };
+
+    /* ---------- pay action ---------- */
+    payBtn.onclick = () => {
+      /* basic insufficient-funds check */
+      if (payAmount > balance) {
+        alert("Insufficient balance!");
+        return;
+      }
+
+      loading.style.visibility = 'visible';
+
+      /* update balance and persist */
+      balance = +(balance - payAmount).toFixed(2);
+      localStorage.setItem(BALANCE_KEY, balance);
+
+      setTimeout(() => {
+        const to = encodeURIComponent(toInput.value.trim());
+        location.href = `statement.html?amount=${payAmount}&to=${to}`;
+      }, 1800);
+    };
+
+    /* close → back to keypad */
+    $('closeBtn').onclick = () => location.href = 'index.html';
+  </script>
+</body>
+</html>
