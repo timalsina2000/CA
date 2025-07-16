@@ -58,10 +58,17 @@
 }
 .balance i{font-size:1.1rem;color:#0f0}
 
+.bal-icon{
+  width:24px;
+  height:24px;
+  border-radius:6px;
+  object-fit:cover;
+}
+
 /* ---------- suggestions list container ---------- */
 #suggestions{
   margin-top:14px;
-  max-height:260px;
+  max-height:460px;
   overflow-y:auto;
   width:100%;
 }
@@ -69,9 +76,9 @@
   font-size:.85rem;
   font-weight:600;
   color:var(--text-dim);
-  margin-bottom:6px;
+  margin:6px 0;
   padding:0 2px;
-  text-transform:none; /* screenshot uses Title Case */
+  text-transform:none;
 }
 
 /* suggestion row (screenshot style) */
@@ -85,6 +92,14 @@
 }
 .sg-row:hover{background:#111}
 
+/* typed row variant */
+.sg-row.sg-typed{
+  background:#0a0a0a;
+}
+.sg-row.sg-typed:hover{
+  background:#111;
+}
+
 /* avatar types */
 .sg-avatar-img,
 .sg-avatar-fallback{
@@ -94,6 +109,7 @@
   flex-shrink:0;
   object-fit:cover;
   display:block;
+  margin-right:8px; /* space between avatar + text */
 }
 .sg-avatar-fallback{
   display:flex;
@@ -108,7 +124,7 @@
 /* text block */
 .sg-txt{
   flex:1;
-  min-width:0; /* for ellipsis */
+  min-width:0;
 }
 .sg-name{
   font-size:1rem;
@@ -196,12 +212,6 @@
     to{opacity:1;transform:scale(1)}
   }
 }
-.bal-icon{
-  width:24px;
-  height:24px;
-  border-radius:6px;     /* or 50% if you want round */
-  object-fit:cover;
-}
 </style>
 </head>
 <body>
@@ -213,17 +223,18 @@
   </div>
 
   <div class="row" style="margin-top:40px">
-    <label style="color: #fff;"> To</label>
+    <label style="color:#fff;">To</label>
     <input id="toInput" type="text" placeholder="Name or $cashtag" autocomplete="off"/>
     <img src="https://dummyimage.com/48x48/0d0d0d/ffffff&text=%F0%9F%92%8E" alt="gem" style="width:32px;border-radius:8px">
   </div>
 
   <div class="row">
-    <label style="color: #fff;">For</label>
+    <label style="color:#fff;">For</label>
     <input id="noteInput" type="text" placeholder="w, tapper"/>
   </div>
 
-  <div class="balance"> <strong>Use</strong>
+  <div class="balance">
+    <strong>Use</strong>
     <img src="cash.png" alt="Cash" class="bal-icon">
     <span id="balanceText"></span>
     <i class="fas fa-chevron-down" style="margin-left:auto"></i>
@@ -288,7 +299,7 @@ const contacts = [
   { name: 'Diana Prince',        tag: '$dianap',           color: '#C0392B' },
   { name: 'Ethan Brooks',        tag: '$ethanb',           color: '#27AE60' },
   { name: 'Fiona Gallagher',     tag: '$fionag',           color: '#A569BD' },
-  { name: 'Gavin Hart',          tag: '#gavinh',           color: '#F1C40F' },
+  { name: 'Gavin Hart',          tag: '#gavinh',           color: '#F1C40F' },  /* kept as provided */
   { name: 'Hannah Kim',          tag: '$hannahk',          color: '#0ABDE3' },
   { name: 'Ivan Lopez',          tag: '$ivanl',            color: '#E17055' },
   { name: 'Jasmine Moore',       tag: '$jmoore',           color: '#EE5253' },
@@ -314,7 +325,7 @@ const toInput       = $('toInput');
 const suggestionsEl = $('suggestions');
 const payBtn        = $('payBtn');
 const loading       = $('loading');
-let currentSelected = null; // track which contact user tapped
+let currentSelected = null;
 
 /* escape HTML to avoid injection */
 const escMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -324,27 +335,54 @@ const MIN_SUGGESTIONS = 10;
 
 /* build avatar node (image vs fallback letter) */
 function buildAvatar(c){
-  // if you later add real photos, pass c.img
   if(c.img){
     return `<img class="sg-avatar-img" src="${esc(c.img)}" alt="">`;
   }
   return `<div class="sg-avatar-fallback" style="background:${c.color}">${esc(c.name[0])}</div>`;
 }
 
-/* render suggestions screenshot style */
+/* build typed row */
+function buildTypedRow(raw){
+  const firstChar = esc(raw[0] || '?').toUpperCase();
+  const displayHandle = raw.startsWith('$') ? raw : '$' + raw;
+  const row = document.createElement('div');
+  row.className = 'sg-row sg-typed';
+  row.innerHTML = `
+    <div class="sg-avatar-fallback" style="background:#333">${firstChar}</div>
+    <div class="sg-txt">
+      <div class="sg-name">${esc(raw)}</div>
+      <div class="sg-handle">${esc(displayHandle)}</div>
+    </div>
+    <div class="sg-check"><i class="fa-solid fa-check"></i></div>
+  `;
+  row.onclick = ()=>{
+    currentSelected = { name:raw, tag:displayHandle };
+    toInput.value = raw;          // keep typed text in input (as before)
+    payBtn.disabled = false;
+    suggestionsEl.innerHTML='';
+  };
+  return row;
+}
+
+/* render suggestions screenshot style + typed row on top */
 function renderSuggestions(){
   const raw = toInput.value.trim();
   const q   = raw.toLowerCase();
 
-  // Filter
+  suggestionsEl.innerHTML='';
+  const frag = document.createDocumentFragment();
+
+  if(raw){
+    frag.appendChild(buildTypedRow(raw));
+  }
+
+  // Filter contacts
   let list = raw
     ? contacts.filter(c => c.name.toLowerCase().includes(q) || c.tag.toLowerCase().includes(q))
     : contacts.slice(); // all
 
-  // Ensure at least MIN_SUGGESTIONS
-  if(list.length < MIN_SUGGESTIONS){
-    // add more from contacts (already have all if raw empty)
-    // (no-op if raw empty & contacts length >= MIN_SUGGESTIONS)
+  // Ensure min length (when filtering)
+  if(raw && list.length < MIN_SUGGESTIONS){
     const seen = new Set(list.map(c=>c.tag));
     for(const c of contacts){
       if(seen.has(c.tag)) continue;
@@ -353,36 +391,34 @@ function renderSuggestions(){
     }
   }
 
-  // Limit display? screenshot shows scroll; we show all; fine.
-  // We'll just render full list.
-  const frag = document.createDocumentFragment();
+  // Only show heading if we actually have contacts to show
+  if(list.length){
+    const heading = document.createElement('div');
+    heading.className='sg-heading';
+    heading.textContent='Suggested';
+    frag.appendChild(heading);
 
-  const heading = document.createElement('div');
-  heading.className='sg-heading';
-  heading.textContent='Suggested';
-  frag.appendChild(heading);
+    list.forEach(c=>{
+      const row = document.createElement('div');
+      row.className='sg-row';
+      row.innerHTML = `
+        ${buildAvatar(c)}
+        <div class="sg-txt">
+          <div class="sg-name">${esc(c.name)}</div>
+          <div class="sg-handle">${esc(c.tag)}</div>
+        </div>
+        <div class="sg-check"><i class="fa-solid fa-check"></i></div>
+      `;
+      row.onclick = ()=>{
+        currentSelected = c;
+        toInput.value = c.tag;
+        payBtn.disabled = false;
+        suggestionsEl.innerHTML='';
+      };
+      frag.appendChild(row);
+    });
+  }
 
-  list.forEach(c=>{
-    const row = document.createElement('div');
-    row.className='sg-row';
-    row.innerHTML = `
-      ${buildAvatar(c)}
-      <div class="sg-txt">
-        <div class="sg-name">${esc(c.name)}</div>
-        <div class="sg-handle">${esc(c.tag)}</div>
-      </div>
-      <div class="sg-check"><i class="fa-solid fa-check"></i></div>
-    `;
-    row.onclick = ()=>{
-      currentSelected = c;
-      toInput.value = c.tag;
-      payBtn.disabled = false;
-      suggestionsEl.innerHTML=''; // collapse list once chosen
-    };
-    frag.appendChild(row);
-  });
-
-  suggestionsEl.innerHTML='';
   suggestionsEl.appendChild(frag);
 }
 
